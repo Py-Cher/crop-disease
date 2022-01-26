@@ -1,1 +1,1 @@
-# crop-disease
+# LG_dacon

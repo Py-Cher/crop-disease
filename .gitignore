@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+*.csv
+test-checkpoint_0fold_200epoch
