@@ -217,7 +217,7 @@ if __name__ == "__main__":
     device = xm.xla_device()
     
     data = pd.read_csv(args.train_csv)
-    label = data['label'].apply(lambda x: x.split('_')[0]) # try crop_dis_risk label instead of crop label
+    label = data['label'].values #apply(lambda x: x.split('_')[0]) # try crop_dis_risk label instead of crop label
     kfold = StratifiedKFold(n_splits=args.n_fold, shuffle=True)
     
     if args.reload_epoch_from:

@@ -27,5 +27,5 @@ class efficientnet_base(nn.Module):
         disease_pre = self.disease(torch.cat([x,F.relu(crop_pre.clone())],dim=1))
         risk_pre = self.risk(torch.cat([x,F.relu(disease_pre.clone())], dim=1))
         
-        return F.log_softmax(crop_pre), F.log_softmax(disease_pre), F.log_softmax(risk_pre)
+        return F.log_softmax(crop_pre, dim=-1), F.log_softmax(disease_pre, dim=-1), F.log_softmax(risk_pre, dim=-1)
     

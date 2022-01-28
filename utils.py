@@ -84,7 +84,7 @@ class custom_beam_search_decoder():
     
 				if rule is not None:
 					mask = rule[seq[-1]]
-					row[mask] = 1e-100
+					row[mask] = np.log(1e-100)
      
 				for j in range(len(row)):
 					candidate = [seq + [j], score - row[j]]

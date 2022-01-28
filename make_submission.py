@@ -3,8 +3,8 @@ from tqdm import tqdm
 import time
 import numpy as np
 import torch
-#import torch_xla
-#import torch_xla.core.xla_model as xm
+import torch_xla
+import torch_xla.core.xla_model as xm
 from torch.utils.data import DataLoader
 from models.efficientnet import efficientnet_base
 from dataloader import ImageDataset_test
@@ -15,14 +15,14 @@ def _rebuild_xla_tensor(data, dtype, device, requires_grad):
   tensor.requires_grad = requires_grad
   return tensor
 
-torch._utils._rebuild_xla_tensor = _rebuild_xla_tensor
+#torch._utils._rebuild_xla_tensor = _rebuild_xla_tensor
 
-device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
-#device = xm.xla_device()
+#device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
+device = xm.xla_device()
 model = efficientnet_base(base_model='efficientnet_b5',base_model_ouput_dim=1000)
 model.to(device)
 
-checkpoint = torch.load('../test-checkpoint_0fold_200epoch')
+checkpoint = torch.load('../checkpoint/test-checkpoint_3fold_200epoch')
 model.load_state_dict(checkpoint['model'])
 submission = pd.read_csv('../LG_data/sample_submission.csv')
 
@@ -53,16 +53,16 @@ with torch.no_grad():
         disease_result.extend(disease_pre.detach().cpu().numpy())
         risk_result.extend(risk_pre.detach().cpu().numpy())
 
-crop_result = np.concatenate(crop_result)
-disease_result = np.concatenate(disease_result)
-risk_result = np.concatenate(risk_result)
-
 result = []
 for value in zip(crop_result, disease_result, risk_result):
   result.append(decoder.decode(value,[2,3,2]))
 
+final_result = []
+for row in result:
+  final_result.append(row[0][0])
+
 final_prediction = []
-for a,b,c in result:
+for a,b,c in final_result:
     final_prediction.append(f'{a+1}_{disease_decoder[b]}_{c}')
         
 result_file = pd.read_csv('../LG_data/sample_submission.csv')

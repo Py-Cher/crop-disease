@@ -132,3 +132,4 @@ dmypy.json
 test-checkpoint_0fold_200epoch
 test-checkpoint_2fold_200epoch
 test.py
+result_files
