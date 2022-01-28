@@ -1,12 +1,14 @@
 import pandas as pd
 from tqdm import tqdm 
 import time
+import numpy as np
 import torch
 #import torch_xla
 #import torch_xla.core.xla_model as xm
 from torch.utils.data import DataLoader
 from models.efficientnet import efficientnet_base
 from dataloader import ImageDataset_test
+from utils import custom_beam_search_decoder
 
 def _rebuild_xla_tensor(data, dtype, device, requires_grad):
   tensor = torch.from_numpy(data).to(dtype=dtype, device='cpu')
@@ -35,6 +37,7 @@ test_dataloader = DataLoader(
 
 disease_encoder = {'00':0, 'a11':1, 'a12':2, 'a5':3, 'a7':4, 'a9':5, 'b3':6, 'b4':7, 'b5':8, 'b6':9, 'b7':10, 'b8':11}
 disease_decoder= dict(map(reversed,disease_encoder.items()))
+decoder = custom_beam_search_decoder()
 
 crop_result = []
 disease_result = []
@@ -46,14 +49,22 @@ with torch.no_grad():
         input = batch['input'].to(device)
         crop_pre, disease_pre, risk_pre = model(input)
 
-        crop_result.extend(torch.max(crop_pre.data, 1)[1].cpu().numpy())
-        disease_result.extend(torch.max(disease_pre.data, 1)[1].cpu().numpy())
-        risk_result.extend(torch.max(risk_pre.data, 1)[1].cpu().numpy())
-        
+        crop_result.extend(crop_pre.detach().cpu().numpy())
+        disease_result.extend(disease_pre.detach().cpu().numpy())
+        risk_result.extend(risk_pre.detach().cpu().numpy())
+
+crop_result = np.concatenate(crop_result)
+disease_result = np.concatenate(disease_result)
+risk_result = np.concatenate(risk_result)
+
 result = []
-for a,b,c in zip(crop_result, disease_result, risk_result):
-    result.append(f'{a+1}_{disease_decoder[b]}_{c}')
+for value in zip(crop_result, disease_result, risk_result):
+  result.append(decoder.decode(value,[2,3,2]))
+
+final_prediction = []
+for a,b,c in result:
+    final_prediction.append(f'{a+1}_{disease_decoder[b]}_{c}')
         
 result_file = pd.read_csv('../LG_data/sample_submission.csv')
-result_file['label'] = pd.Series(result)
+result_file['label'] = pd.Series(final_prediction)
 result_file.to_csv('../result.csv',index=False)

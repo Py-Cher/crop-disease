@@ -256,9 +256,9 @@ if __name__ == "__main__":
         model.to(device)
         
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-        criterion1 = nn.CrossEntropyLoss()
-        criterion2 = nn.CrossEntropyLoss()
-        criterion3 = nn.CrossEntropyLoss()
+        criterion1 = nn.NLLLoss()
+        criterion2 = nn.NLLLoss()
+        criterion3 = nn.NLLLoss()
             
         start_epoch = 0
         if fold == args.reload_folder_from and args.reload_epoch_from:

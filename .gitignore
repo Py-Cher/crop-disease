@@ -130,3 +130,5 @@ dmypy.json
 
 *.csv
 test-checkpoint_0fold_200epoch
+test-checkpoint_2fold_200epoch
+test.py
