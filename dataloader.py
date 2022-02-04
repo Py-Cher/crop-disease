@@ -15,7 +15,7 @@ class ImageDataset(Dataset):
         
         super().__init__()
         self.path = image_root_path
-        self.data = dataframe
+        self.data = dataframe.copy()
         self.data['image'] = self.data['image'].apply(lambda x: os.path.join(self.path,str(x),str(x)))
         self.mode = mode
         
@@ -48,7 +48,7 @@ class ImageDataset(Dataset):
         
         image = self.transforms(image)
         
-        return {'input':image, 'crop':int(crop) - 1, 'disease':int(disease), 'risk':int(risk)}
+        return {'input':image, 'crop':torch.LongTensor([int(crop) - 1]), 'disease':torch.LongTensor([int(disease)]), 'risk':torch.LongTensor([int(risk)])}
     
 class ImageDataset_test(Dataset):
     def __init__(

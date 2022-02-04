@@ -5,7 +5,7 @@ import os
 subprocess.call([
     'python3',
     'train.py',
-    '--batch_size', '20',
+    '--batch_size', '24',
     '--total_epoch', '200',
     '--lr', '1e-3',
     '--n_fold', '5',
@@ -15,9 +15,9 @@ subprocess.call([
     '--ckt_folder', '../checkpoint',
     '--img_folder', '../LG_data/train',
     '--train_csv', '../LG_data/train.csv',
-    '--reload_epoch_from', '171',
+    '--reload_epoch_from', '0',
     '--reload_folder_from', '0',
-    '--reload_model_from', 'test-checkpoint_0fold_170epoch_39270step',
+    '--reload_model_from', '',
     '--model', 'efficientnet_b5',
-    '--model_name', 'test',
+    '--model_name', 'alkfold',
 ])

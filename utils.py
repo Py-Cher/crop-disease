@@ -1,6 +1,8 @@
 import numpy as np
 import numpy.ma as ma
 from math import log
+import torch_xla.debug.metrics as met
+import torch_xla.debug.metrics_compare_utils as mcu
 
 def reset_weights(m):
 	'''
@@ -11,6 +13,79 @@ def reset_weights(m):
 		if hasattr(layer, 'reset_parameters'):
 			print(f'Reset trainable parameters of layer = {layer}')
 			layer.reset_parameters()
+   
+def valid_logging(writer, epoch,total_epoch,step,n_iters, losses1, losses2,losses3,correct,total):
+    print(
+		"epo:[%d/%d] itr:[%d/%d] Loss1=%.5f Loss2=%.5f Loss3=%.5f Loss=%.5f Acc1=%.3f Acc2=%.3f Acc3=%.3f Acc=%.3f"
+		% ( 
+			epoch,
+			total_epoch,
+			step,
+			n_iters,
+			np.mean(losses1),
+			np.mean(losses2),
+			np.mean(losses3),
+			np.mean(losses1+losses2+losses3),
+			100.0 * (correct[0] / total[0]),
+			100.0 * (correct[1] / total[1]),
+			100.0 * (correct[2] / total[2]),
+			100.0 * (np.sum(correct) / np.sum(total)),
+		), flush=True
+	)
+    
+    if writer:
+        writer.add_scalars('valid loss',
+			{
+				'loss1':np.mean(losses1),
+				'loss2':np.mean(losses2),
+				'loss3':np.mean(losses3),
+				'total loss':np.mean(losses1+losses2+losses3),
+			},epoch * n_iters + step
+		)
+        
+        writer.add_scalars('valid acc',
+			{
+				'acc1': 100.0 * (correct[0] / total[0]),
+				'acc2':100.0 * (correct[1] / total[1]),
+				'acc3':100.0 * (correct[2] / total[2]),
+				'total acc':100.0 * (np.sum(correct) / np.sum(total)),
+			},epoch * n_iters + step
+		)
+   
+def train_logging(writer, epoch,total_epoch,step,n_iters,elapsed, losses1, losses2,losses3, write_xla_metrics=False):
+    print(
+		"train epo:[%d/%d] itr:[%d/%d] step_time:%ds Loss1=%.5f Loss2=%.5f Loss3=%.5f Loss=%.5f"
+		% ( 
+			epoch,
+			total_epoch,
+			step,
+			n_iters,
+			elapsed,
+			np.mean(losses1),
+			np.mean(losses2),
+			np.mean(losses3),
+			np.mean(losses1+losses2+losses3),
+		), flush=True
+    
+    )
+    
+    if writer:
+        writer.add_scalars('train loss',
+			{
+				'loss1':np.mean(losses1),
+				'loss2':np.mean(losses2),   
+				'loss3':np.mean(losses3),
+				'total loss':np.mean(losses1+losses2+losses3)
+			}, epoch * n_iters + step
+		)
+        if write_xla_metrics:
+            metrics = mcu.parse_metrics_report(met.metrics_report())
+            aten_ops_sum = 0
+            for metric_name, metric_value in metrics.items():
+                if metric_name.find('aten::') == 0:
+                    aten_ops_sum += metric_value
+                writer.add_scalar(metric_name, metric_value, epoch * n_iters + step)
+            writer.add_scalar('aten_ops_sum', aten_ops_sum, epoch * n_iters + step)
 
 class custom_beam_search_decoder():
 	def __init__(self):
